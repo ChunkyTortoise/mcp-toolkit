@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
-import json
 import inspect
+import json
 import traceback
 from typing import get_type_hints
 
 import streamlit as st
 
+from mcp_toolkit.demo import setup_demo_environment
 from mcp_toolkit.shared.registry import get_server, list_servers
 
 st.set_page_config(page_title="MCP Toolkit Playground", page_icon="🔧", layout="wide")
+
+# Provision demo data on first run (idempotent, uses /tmp/)
+path_hints = setup_demo_environment()
 
 st.title("MCP Toolkit Playground")
 st.caption("Test 6 production-ready MCP servers interactively")
@@ -65,12 +69,30 @@ fn = tool.fn
 sig = inspect.signature(fn)
 hints = get_type_hints(fn)
 
+# Map parameter names to smart defaults based on server + param name
+_PATH_PARAMS = {"path", "repo_path", "file_path", "db"}
+
+
+def _default_for(param_name: str, original_default):
+    """Return a demo-friendly default for path parameters."""
+    if param_name in _PATH_PARAMS:
+        hint = path_hints.get(server_info.name, "")
+        if hint and param_name == "db":
+            return "demo"
+        if hint:
+            return hint
+    if original_default is not inspect.Parameter.empty:
+        return original_default
+    return None
+
+
 args = {}
 for param_name, param in sig.parameters.items():
     if param_name in ("self", "ctx"):
         continue
     hint = hints.get(param_name, str)
-    default = param.default if param.default is not inspect.Parameter.empty else None
+    raw_default = param.default if param.default is not inspect.Parameter.empty else None
+    default = _default_for(param_name, param.default)
 
     col1, col2 = st.columns([1, 3])
     with col1:
@@ -105,9 +127,9 @@ for param_name, param in sig.parameters.items():
                     args[param_name] = json.loads(raw)
                 except json.JSONDecodeError:
                     st.error(f"Invalid JSON for {param_name}")
-                    args[param_name] = default
+                    args[param_name] = raw_default
             else:
-                args[param_name] = default
+                args[param_name] = raw_default
         else:
             args[param_name] = st.text_input(
                 param_name,
