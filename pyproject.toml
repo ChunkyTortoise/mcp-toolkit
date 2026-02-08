@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcp-toolkit"
+version = "0.1.0"
+description = "6 production-ready MCP servers + CLI discovery tool + Streamlit playground"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [{name = "Cayman Roden"}]
+dependencies = [
+    "fastmcp>=2.0,<3",
+    "click>=8.1",
+    "streamlit>=1.30",
+    "psutil>=5.9",
+    "GitPython>=3.1",
+    "scikit-learn>=1.4",
+]
+
+[project.scripts]
+mcp-toolkit = "mcp_toolkit.cli:cli"
+
+[tool.setuptools.packages.find]
+include = ["mcp_toolkit*"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"

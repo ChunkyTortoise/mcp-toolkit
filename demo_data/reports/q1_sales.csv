@@ -1,0 +1,7 @@
+product,region,units,revenue,date
+Widget A,North,150,4500.00,2026-01-15
+Widget B,South,200,6000.00,2026-01-20
+Widget A,East,175,5250.00,2026-02-01
+Widget C,West,90,3600.00,2026-02-15
+Widget B,North,220,6600.00,2026-03-01
+Widget A,South,160,4800.00,2026-03-10
