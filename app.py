@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import inspect
 import json
 import traceback
@@ -47,7 +48,7 @@ if not server_info:
 
 # --- Load the server's MCP instance ---
 mcp_instance = server_info.load()
-tools = {t.name: t for t in mcp_instance.get_tools()}
+tools = asyncio.run(mcp_instance.get_tools())
 
 # --- Main area: Tool selector ---
 st.subheader(f"{server_info.name}")
