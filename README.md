@@ -80,7 +80,7 @@ mcp-toolkit/
 ├── app.py                         # Streamlit playground
 ├── demo_data/                     # Sample files for file-organizer
 ├── demo_docs/                     # Sample markdown for markdown-kb
-└── tests/                         # 70+ pytest tests
+└── tests/                         # 184 pytest tests
 ```
 
 ## Server Catalog
@@ -211,10 +211,29 @@ Task management with dependency resolution.
 | `add_dependency` | Add task-to-task dependency |
 | `get_ready_tasks` | Find unblocked pending tasks |
 
+## Architecture Decisions
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [ADR-0001](docs/adr/0001-fastmcp-v2-over-raw-protocol.md) | FastMCP v2 Over Raw Protocol | Accepted |
+| [ADR-0002](docs/adr/0002-six-server-modularity.md) | Six-Server Modularity | Accepted |
+| [ADR-0003](docs/adr/0003-analytics-cost-tracking.md) | Analytics and Cost Tracking | Accepted |
+
+## Benchmarks
+
+See [BENCHMARKS.md](BENCHMARKS.md) for methodology and results. Key numbers:
+
+| Operation | P50 | Throughput |
+|-----------|-----|------------|
+| JSON-RPC Serialize/Deserialize | 0.35ms | 2,645 ops/sec |
+| Tool Dispatch + Validation | 0.06ms | 11,987 ops/sec |
+| Server Registry Lookup | 0.04ms | 15,562 ops/sec |
+| Capability Negotiation | 0.96ms | 1,000 ops/sec |
+
 ## Development
 
 ```bash
-make test      # Run 70+ pytest tests
+make test      # Run 184 pytest tests
 make lint      # Ruff lint + format check
 make format    # Auto-fix lint + formatting
 make demo      # Launch Streamlit playground
@@ -235,7 +254,7 @@ make demo      # Launch Streamlit playground
 |--------|-------|
 | MCP Servers | 6 |
 | Total Tools | 32 |
-| Test Suite | 70+ pytest tests |
+| Test Suite | 184 pytest tests |
 | Python | 3.11+ |
 | Protocol | FastMCP v2 (stdio / SSE) |
 | CI | GitHub Actions |
@@ -253,6 +272,10 @@ make demo      # Launch Streamlit playground
 - Duke University LLMOps Specialization
 - Google Cloud Generative AI Leader Certificate
 - Vanderbilt Generative AI Strategic Leader Specialization
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 ## License
 
