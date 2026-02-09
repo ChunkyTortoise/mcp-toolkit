@@ -11,7 +11,6 @@ from mcp_toolkit.demo import (
     DEMO_TASKS,
     _is_setup_done,
     _path_hints,
-    _setup_tasks,
     setup_demo_environment,
 )
 

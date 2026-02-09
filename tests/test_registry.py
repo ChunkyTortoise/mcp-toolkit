@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
-
 from mcp_toolkit.shared.registry import (
-    ServerInfo,
     _REGISTRY,
+    ServerInfo,
     _discover_servers,
     get_server,
     get_server_names,

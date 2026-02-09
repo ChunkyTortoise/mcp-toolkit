@@ -6,3 +6,27 @@ build/
 .pytest_cache/
 *.egg
 .ruff_cache/
+
+# Added by deep clean
+*.py[cod]
+*$py.class
+*.so
+venv/
+.venv/
+env/
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.hypothesis/
+.coverage
+htmlcov/
+coverage.xml
+.mypy_cache/
+.env
+.env.local
+.env.*.local
+.DS_Store
+Thumbs.db
+*.log
