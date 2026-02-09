@@ -6,6 +6,20 @@
 
 MCP is the open standard for connecting AI assistants to external tools. This toolkit provides ready-to-use servers covering common development workflows: database operations, file management, knowledge search, system monitoring, git analytics, and task tracking.
 
+![CI](https://github.com/ChunkyTortoise/mcp-toolkit/actions/workflows/ci.yml/badge.svg)
+![Python](https://img.shields.io/badge/python-3.11%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+
+## What This Solves
+
+- **Slow tool integration** — Stand up MCP servers in minutes instead of weeks
+- **Fragmented workflows** — One toolkit for data, files, git, monitoring, and tasks
+- **Weak governance** — Consistent server specs and auto-discovery for safer deployments
+
+## Demo
+
+Live demo: https://ct-mcp-toolkit.streamlit.app
+
 ## Architecture
 
 ```
@@ -171,6 +185,19 @@ make demo      # Launch Streamlit playground
 - **psutil** — System monitoring
 - **GitPython** — Git operations
 - **scikit-learn** — TF-IDF search (markdown-kb)
+
+## Service Mapping
+
+- Service 24: Knowledge Management
+- Service 6: AI-Powered Personal and Business Automation
+- Service 21: Workflow Optimization
+
+## Certification Mapping
+
+- IBM RAG and Agentic AI Professional Certificate
+- Duke University LLMOps Specialization
+- Google Cloud Generative AI Leader Certificate
+- Vanderbilt Generative AI Strategic Leader Specialization
 
 ## License
 
