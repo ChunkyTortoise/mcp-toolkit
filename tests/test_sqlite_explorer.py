@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from mcp_toolkit.servers.sqlite_explorer import (
+    _resolve_db_path,
     create_database,
     delete,
     get_schema,
@@ -203,3 +204,87 @@ class TestSchemaAndRowid:
         assert set(schema.keys()) == {"accounts", "sessions", "logs"}
         for table_cols in schema.values():
             assert len(table_cols) >= 2
+
+
+class TestResolveDbPath:
+    def test_bare_name_goes_to_tmp(self):
+        """A bare name with no path separator resolves under /tmp."""
+        result = _resolve_db_path("mydb")
+        assert result == "/tmp/mydb.db"
+
+    def test_bare_name_with_suffix(self):
+        """A bare name already having .db suffix is not doubled."""
+        result = _resolve_db_path("mydb.db")
+        assert result == "/tmp/mydb.db"
+
+    def test_absolute_path_preserved(self):
+        """An absolute path is used as-is (with suffix added if missing)."""
+        result = _resolve_db_path("/data/store")
+        assert result == "/data/store.db"
+
+    def test_absolute_path_with_suffix(self):
+        """An absolute path with .db suffix is unchanged."""
+        result = _resolve_db_path("/data/store.db")
+        assert result == "/data/store.db"
+
+
+class TestQueryEdgeCases:
+    def test_query_rejects_update_statement(self, tmp_dir):
+        """UPDATE via query() raises ValueError."""
+        db_path = str(tmp_dir / "reject_upd.db")
+        create_database.fn(
+            name=db_path,
+            tables={"t": {"id": "INTEGER PRIMARY KEY", "val": "TEXT"}},
+        )
+        with pytest.raises(ValueError, match="Only SELECT"):
+            query.fn(db=db_path, sql="UPDATE t SET val='x' WHERE id=1")
+
+    def test_query_rejects_delete_statement(self, tmp_dir):
+        """DELETE via query() raises ValueError."""
+        db_path = str(tmp_dir / "reject_del.db")
+        create_database.fn(
+            name=db_path,
+            tables={"t": {"id": "INTEGER PRIMARY KEY"}},
+        )
+        with pytest.raises(ValueError, match="Only SELECT"):
+            query.fn(db=db_path, sql="DELETE FROM t WHERE id=1")
+
+    def test_query_case_insensitive_select(self, tmp_dir):
+        """SELECT in lowercase is still accepted."""
+        db_path = str(tmp_dir / "ci.db")
+        create_database.fn(
+            name=db_path,
+            tables={"nums": {"id": "INTEGER PRIMARY KEY", "val": "INTEGER"}},
+        )
+        insert.fn(db=db_path, table="nums", data={"val": 42})
+        rows = query.fn(db=db_path, sql="select val from nums")
+        assert len(rows) == 1
+        assert rows[0]["val"] == 42
+
+
+class TestSchemaEdgeCases:
+    def test_get_schema_empty_db(self, tmp_dir):
+        """Schema of a DB with no tables returns empty dict."""
+        import sqlite3
+
+        db_path = str(tmp_dir / "empty_schema.db")
+        conn = sqlite3.connect(db_path)
+        conn.close()
+        schema = get_schema.fn(db=db_path)
+        assert schema == {}
+
+    def test_schema_column_details(self, tmp_dir):
+        """Schema column descriptors include expected keys."""
+        db_path = str(tmp_dir / "col_detail.db")
+        create_database.fn(
+            name=db_path,
+            tables={"items": {"id": "INTEGER PRIMARY KEY", "name": "TEXT NOT NULL"}},
+        )
+        schema = get_schema.fn(db=db_path)
+        cols = schema["items"]
+        for col in cols:
+            for key in ("name", "type", "notnull", "default", "pk"):
+                assert key in col
+        # id should be the primary key
+        id_col = next(c for c in cols if c["name"] == "id")
+        assert id_col["pk"] is True

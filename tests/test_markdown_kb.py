@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from mcp_toolkit.servers.markdown_kb import (
+    _extract_title,
     _index_state,
+    _make_doc_id,
     get_document,
     get_stats,
     index_documents,
@@ -110,3 +112,84 @@ class TestListAndStats:
         assert titles["intro"] == "Introduction"
         assert titles["setup"] == "Setup Guide"
         assert titles["api"] == "API Reference"
+
+
+class TestIndexEdgeCases:
+    def test_index_invalid_directory(self):
+        """Indexing a nonexistent directory returns an error string."""
+        _clear_index()
+        result = index_documents.fn(path="/nonexistent/path/xyz")
+        assert "Error" in result
+
+    def test_index_custom_extensions(self, tmp_dir):
+        """Indexing with custom extensions only picks those files."""
+        _clear_index()
+        (tmp_dir / "doc.md").write_text("# Markdown\nSome markdown content")
+        (tmp_dir / "notes.txt").write_text("Plain text notes about things")
+        result = index_documents.fn(path=str(tmp_dir), extensions=[".txt"])
+        assert "1 documents" in result
+        docs = list_documents.fn()
+        assert len(docs) == 1
+        assert docs[0]["doc_id"] == "notes"
+
+    def test_index_duplicate_doc_ids(self, tmp_dir):
+        """Duplicate file stems get parent dir name prepended."""
+        _clear_index()
+        sub1 = tmp_dir / "a"
+        sub1.mkdir()
+        sub2 = tmp_dir / "b"
+        sub2.mkdir()
+        (sub1 / "readme.md").write_text("# First Readme\nContent A")
+        (sub2 / "readme.md").write_text("# Second Readme\nContent B")
+        index_documents.fn(path=str(tmp_dir))
+        docs = list_documents.fn()
+        assert len(docs) == 2
+        doc_ids = {d["doc_id"] for d in docs}
+        # One is "readme", the other should be "b_readme" (or "a_readme")
+        assert len(doc_ids) == 2
+
+
+class TestSearchEdgeCases:
+    def test_search_top_k_limits_results(self, sample_markdown_dir):
+        """top_k=1 returns at most 1 result."""
+        _clear_index()
+        index_documents.fn(path=str(sample_markdown_dir))
+        results = search.fn(query="documentation", top_k=1)
+        assert len(results) <= 1
+
+    def test_search_irrelevant_query(self, sample_markdown_dir):
+        """Query with no matching terms returns empty list."""
+        _clear_index()
+        index_documents.fn(path=str(sample_markdown_dir))
+        results = search.fn(query="xylophone zebra quantum")
+        assert results == []
+
+
+class TestStatsEdgeCases:
+    def test_stats_empty_index(self):
+        """Stats on an empty index returns all zeros."""
+        _clear_index()
+        stats = get_stats.fn()
+        assert stats["total_docs"] == 0
+        assert stats["total_tokens"] == 0
+        assert stats["avg_doc_length"] == 0
+        assert stats["vocabulary_size"] == 0
+
+
+class TestHelperFunctions:
+    def test_extract_title_with_heading(self):
+        """Extracts title from '# Heading' line."""
+        assert _extract_title("# My Title\n\nSome body text", "file.md") == "My Title"
+
+    def test_extract_title_fallback(self):
+        """Falls back to cleaned filename when no heading exists."""
+        assert _extract_title("No heading here\nJust text", "my-cool-doc.md") == "My Cool Doc"
+
+    def test_extract_title_underscore_fallback(self):
+        """Underscores in filename are replaced with spaces and title-cased."""
+        assert _extract_title("no heading", "data_pipeline_notes.md") == "Data Pipeline Notes"
+
+    def test_make_doc_id(self):
+        """Derives doc ID from filename stem."""
+        assert _make_doc_id("path/to/readme.md") == "readme"
+        assert _make_doc_id("report.txt") == "report"

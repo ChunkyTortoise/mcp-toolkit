@@ -85,6 +85,85 @@ class TestAnalyzeDirectory:
             assert ext_data["count"] >= 1
 
 
+class TestFindDuplicatesEdgeCases:
+    def test_find_duplicates_unsupported_method(self, demo_data_dir):
+        """Unsupported method raises ValueError."""
+        with pytest.raises(ValueError, match="Unsupported method"):
+            find_duplicates.fn(path=str(demo_data_dir), method="name")
+
+    def test_find_duplicates_not_a_directory(self, demo_data_dir):
+        """Non-directory path raises ValueError."""
+        file_path = str(demo_data_dir / "reports" / "q1_sales.csv")
+        with pytest.raises(ValueError, match="not a directory"):
+            find_duplicates.fn(path=file_path)
+
+    def test_find_duplicates_no_duplicates(self, tmp_dir):
+        """Directory with all unique files returns empty list."""
+        (tmp_dir / "a.txt").write_text("alpha")
+        (tmp_dir / "b.txt").write_text("bravo")
+        (tmp_dir / "c.txt").write_text("charlie")
+        groups = find_duplicates.fn(path=str(tmp_dir))
+        assert groups == []
+
+
+class TestAnalyzeDirectoryEdgeCases:
+    def test_analyze_directory_not_a_dir(self, demo_data_dir):
+        """Non-directory path raises ValueError."""
+        file_path = str(demo_data_dir / "reports" / "q1_sales.csv")
+        with pytest.raises(ValueError, match="not a directory"):
+            analyze_directory.fn(path=file_path)
+
+    def test_analyze_empty_directory(self, tmp_dir):
+        """Empty directory returns zero counts."""
+        result = analyze_directory.fn(path=str(tmp_dir))
+        assert result["total_files"] == 0
+        assert result["total_size"] == 0
+        assert result["by_extension"] == {}
+
+    def test_analyze_no_extension_files(self, tmp_dir):
+        """Files without extensions are grouped under '(no extension)'."""
+        (tmp_dir / "Makefile").write_text("all: build")
+        (tmp_dir / "Dockerfile").write_text("FROM python:3.11")
+        result = analyze_directory.fn(path=str(tmp_dir))
+        assert "(no extension)" in result["by_extension"]
+        assert result["by_extension"]["(no extension)"]["count"] == 2
+
+
+class TestSearchFilesEdgeCases:
+    def test_search_files_max_depth_one(self, tmp_dir):
+        """max_depth=1 finds files only in the root, not in subdirectories."""
+        (tmp_dir / "top.txt").write_text("top")
+        sub = tmp_dir / "sub"
+        sub.mkdir()
+        (sub / "deep.txt").write_text("deep")
+        results = search_files.fn(path=str(tmp_dir), max_depth=0)
+        # max_depth=0: walk starts at depth=1 which is > 0, so no results
+        assert results == []
+
+    def test_search_files_nonexistent_pattern(self, tmp_dir):
+        """Pattern matching nothing returns empty list."""
+        (tmp_dir / "readme.md").write_text("hello")
+        results = search_files.fn(path=str(tmp_dir), pattern="*.xyz")
+        assert results == []
+
+
+class TestGetMetadataEdgeCases:
+    def test_get_metadata_unknown_extension(self, tmp_dir):
+        """File with unrecognized extension falls back to application/octet-stream."""
+        weird_file = tmp_dir / "data.xyz123"
+        weird_file.write_text("stuff")
+        meta = get_metadata.fn(file_path=str(weird_file))
+        assert meta["mime_type"] == "application/octet-stream"
+
+    def test_get_metadata_has_all_keys(self, tmp_dir):
+        """Metadata includes path, size, modified, created, mime_type, sha256."""
+        f = tmp_dir / "test.txt"
+        f.write_text("content")
+        meta = get_metadata.fn(file_path=str(f))
+        for key in ("path", "size", "modified", "created", "mime_type", "sha256"):
+            assert key in meta
+
+
 class TestBulkRename:
     def test_bulk_rename_dry_run(self, tmp_dir):
         """Dry run returns planned renames but does not execute them."""
@@ -122,3 +201,20 @@ class TestBulkRename:
         # New files should exist
         assert (tmp_dir / "photo_a.png").exists()
         assert (tmp_dir / "photo_b.png").exists()
+
+    def test_bulk_rename_no_matches(self, tmp_dir):
+        """Pattern matching nothing returns empty rename list."""
+        (tmp_dir / "file_a.txt").write_text("a")
+        renames = bulk_rename.fn(
+            path=str(tmp_dir),
+            pattern=r"^ZZZZZ",
+            replacement="YYY",
+        )
+        assert renames == []
+
+    def test_bulk_rename_not_a_dir(self, tmp_dir):
+        """Non-directory path raises ValueError."""
+        f = tmp_dir / "file.txt"
+        f.write_text("x")
+        with pytest.raises(ValueError, match="not a directory"):
+            bulk_rename.fn(path=str(f), pattern="x", replacement="y")

@@ -137,6 +137,60 @@ class TestFindLargeFiles:
         assert result[0]["size_kb"] >= 200
 
 
+class TestBlameMultiline:
+    def test_blame_multiline_file(self, git_repo, tmp_dir):
+        """Blame on a multi-line file returns one entry per line."""
+        (tmp_dir / "multi.txt").write_text("line1\nline2\nline3\n")
+        git_repo.index.add(["multi.txt"])
+        git_repo.index.commit("Add multi-line file")
+        result = get_blame.fn(repo_path=git_repo.working_dir, file_path="multi.txt")
+        assert len(result) == 3
+        assert result[0]["line_number"] == 1
+        assert result[1]["line_number"] == 2
+        assert result[2]["line_number"] == 3
+
+
+class TestContributorStatsMultiple:
+    def test_multiple_contributors(self, git_repo, tmp_dir):
+        """Tracks separate contributors with correct commit counts."""
+        # Add a second commit from a different author
+        git_repo.config_writer().set_value("user", "email", "alice@example.com").release()
+        git_repo.config_writer().set_value("user", "name", "Alice Dev").release()
+        (tmp_dir / "alice.txt").write_text("alice's file")
+        git_repo.index.add(["alice.txt"])
+        git_repo.index.commit("Alice's commit")
+
+        result = get_contributor_stats.fn(repo_path=git_repo.working_dir)
+        assert len(result) == 2
+        emails = {c["email"] for c in result}
+        assert "test@example.com" in emails
+        assert "alice@example.com" in emails
+        # Sorted by commit count descending; both have 1 commit
+        for c in result:
+            assert c["commit_count"] == 1
+
+
+class TestFindLargeFilesEdgeCases:
+    def test_find_large_files_low_threshold(self, git_repo):
+        """A threshold of 0 KB returns all tracked files."""
+        result = find_large_files.fn(repo_path=git_repo.working_dir, threshold_kb=0)
+        assert len(result) >= 1
+        # test.txt from initial commit should be in the results
+        paths = [f["path"] for f in result]
+        assert "test.txt" in paths
+
+    def test_find_large_files_sorted_desc(self, git_repo, tmp_dir):
+        """Results are sorted by size_kb descending."""
+        (tmp_dir / "small.bin").write_bytes(b"x" * 1024)
+        (tmp_dir / "large.bin").write_bytes(b"x" * (10 * 1024))
+        git_repo.index.add(["small.bin", "large.bin"])
+        git_repo.index.commit("Add binary files")
+
+        result = find_large_files.fn(repo_path=git_repo.working_dir, threshold_kb=0)
+        sizes = [f["size_kb"] for f in result]
+        assert sizes == sorted(sizes, reverse=True)
+
+
 class TestInvalidRepo:
     def test_invalid_repo(self, tmp_dir):
         """Non-repo path raises ValueError."""
@@ -144,3 +198,17 @@ class TestInvalidRepo:
         non_repo.mkdir()
         with pytest.raises(ValueError, match="Not a valid git repository"):
             get_repo_stats.fn(repo_path=str(non_repo))
+
+    def test_invalid_repo_for_commit_history(self, tmp_dir):
+        """Non-repo path raises ValueError for get_commit_history."""
+        non_repo = tmp_dir / "not_a_repo2"
+        non_repo.mkdir()
+        with pytest.raises(ValueError, match="Not a valid git repository"):
+            get_commit_history.fn(repo_path=str(non_repo))
+
+    def test_invalid_repo_for_contributor_stats(self, tmp_dir):
+        """Non-repo path raises ValueError for get_contributor_stats."""
+        non_repo = tmp_dir / "not_a_repo3"
+        non_repo.mkdir()
+        with pytest.raises(ValueError, match="Not a valid git repository"):
+            get_contributor_stats.fn(repo_path=str(non_repo))

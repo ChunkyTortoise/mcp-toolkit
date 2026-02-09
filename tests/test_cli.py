@@ -85,3 +85,37 @@ class TestConfigCommand:
         result = runner.invoke(cli, ["config", "nonexistent"])
         assert result.exit_code == 1
         assert "not found" in result.output.lower()
+
+    def test_config_has_command_and_args(self, runner):
+        """Config JSON contains 'command' and 'args' keys."""
+        result = runner.invoke(cli, ["config", "task-tracker"])
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        server_cfg = data["mcpServers"]["task-tracker"]
+        assert "command" in server_cfg
+        assert "args" in server_cfg
+        assert server_cfg["command"] == "mcp-toolkit"
+        assert server_cfg["args"] == ["serve", "task-tracker"]
+
+
+class TestServeCommand:
+    def test_serve_invalid_server(self, runner):
+        """Serve for a nonexistent server exits with code 1."""
+        result = runner.invoke(cli, ["serve", "nonexistent"])
+        assert result.exit_code == 1
+        assert "not found" in result.output.lower()
+
+
+class TestInfoCommandDetails:
+    def test_info_shows_module_path(self, runner):
+        """Info output includes the module path."""
+        result = runner.invoke(cli, ["info", "file-organizer"])
+        assert result.exit_code == 0
+        assert "mcp_toolkit.servers.file_organizer" in result.output
+
+    def test_info_shows_tools(self, runner):
+        """Info for task-tracker lists its tool names."""
+        result = runner.invoke(cli, ["info", "task-tracker"])
+        assert result.exit_code == 0
+        assert "create_task" in result.output
+        assert "list_tasks" in result.output
