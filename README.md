@@ -1,3 +1,5 @@
+[![Sponsor](https://img.shields.io/badge/Sponsor-💖-pink.svg)](https://github.com/sponsors/ChunkyTortoise)
+
 # MCP Toolkit
 
 6 production-ready MCP (Model Context Protocol) servers + CLI discovery tool + Streamlit playground.
