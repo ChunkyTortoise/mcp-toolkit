@@ -8,6 +8,7 @@ MCP is the open standard for connecting AI assistants to external tools. This to
 
 ![CI](https://github.com/ChunkyTortoise/mcp-toolkit/actions/workflows/ci.yml/badge.svg)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
+![Tests](https://img.shields.io/badge/tests-180%2B%20passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## What This Solves
@@ -80,7 +81,7 @@ mcp-toolkit/
 ├── app.py                         # Streamlit playground
 ├── demo_data/                     # Sample files for file-organizer
 ├── demo_docs/                     # Sample markdown for markdown-kb
-└── tests/                         # 184 pytest tests
+└── tests/                         # 180+ pytest tests
 ```
 
 ## Server Catalog
@@ -233,7 +234,7 @@ See [BENCHMARKS.md](BENCHMARKS.md) for methodology and results. Key numbers:
 ## Development
 
 ```bash
-make test      # Run 184 pytest tests
+make test      # Run 180+ pytest tests
 make lint      # Ruff lint + format check
 make format    # Auto-fix lint + formatting
 make demo      # Launch Streamlit playground
@@ -254,7 +255,7 @@ make demo      # Launch Streamlit playground
 |--------|-------|
 | MCP Servers | 6 |
 | Total Tools | 32 |
-| Test Suite | 184 pytest tests |
+| Test Suite | 180+ pytest tests |
 | Python | 3.11+ |
 | Protocol | FastMCP v2 (stdio / SSE) |
 | CI | GitHub Actions |
@@ -276,6 +277,13 @@ make demo      # Launch Streamlit playground
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for release history.
+
+## Related Projects
+
+- [EnterpriseHub](https://github.com/ChunkyTortoise/EnterpriseHub) -- Real estate AI platform with BI dashboards and CRM integration
+- [ai-orchestrator](https://github.com/ChunkyTortoise/ai-orchestrator) -- AgentForge: unified async LLM interface (Claude, Gemini, OpenAI, Perplexity)
+- [llm-integration-starter](https://github.com/ChunkyTortoise/llm-integration-starter) -- Production LLM patterns: completion, streaming, function calling, RAG, hardening
+- [Portfolio](https://chunkytortoise.github.io) -- Project showcase and services
 
 ## License
 
