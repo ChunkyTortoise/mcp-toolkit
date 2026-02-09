@@ -22,6 +22,49 @@ Live demo: https://ct-mcp-toolkit.streamlit.app
 
 ## Architecture
 
+```mermaid
+flowchart TB
+    subgraph Client["Client Layer"]
+        CLI["CLI (Click)"]
+        Playground["Streamlit Playground"]
+    end
+
+    subgraph Core["Core"]
+        Registry["Server Registry<br/><i>shared/registry.py</i>"]
+    end
+
+    subgraph Servers["MCP Servers"]
+        FS["file-organizer<br/>5 tools"]
+        GH["git-insights<br/>5 tools"]
+        KB["markdown-kb<br/>5 tools"]
+        AN["system-monitor<br/>5 tools"]
+        DB["sqlite-explorer<br/>6 tools"]
+        TK["task-tracker<br/>6 tools"]
+    end
+
+    subgraph Protocol["Protocol Layer"]
+        FastMCP["FastMCP v2<br/><i>stdio / SSE transport</i>"]
+    end
+
+    subgraph Execution["Execution Layer"]
+        Tools["Tool Execution<br/><i>32 tools across 6 servers</i>"]
+    end
+
+    CLI -->|"list / info / serve"| Registry
+    Playground -->|"interactive UI"| Registry
+    Registry -->|"auto-discovery"| Servers
+    Servers -->|"register tools"| FastMCP
+    FastMCP -->|"request / response"| Tools
+
+    style Client fill:#e3f2fd,stroke:#1565c0
+    style Core fill:#fff3e0,stroke:#ef6c00
+    style Servers fill:#e8f5e9,stroke:#2e7d32
+    style Protocol fill:#f3e5f5,stroke:#7b1fa2
+    style Execution fill:#fce4ec,stroke:#c62828
+```
+
+### Directory Layout
+
 ```
 mcp-toolkit/
 ├── mcp_toolkit/
@@ -185,6 +228,18 @@ make demo      # Launch Streamlit playground
 - **psutil** — System monitoring
 - **GitPython** — Git operations
 - **scikit-learn** — TF-IDF search (markdown-kb)
+
+## Key Metrics
+
+| Metric | Value |
+|--------|-------|
+| MCP Servers | 6 |
+| Total Tools | 32 |
+| Test Suite | 70+ pytest tests |
+| Python | 3.11+ |
+| Protocol | FastMCP v2 (stdio / SSE) |
+| CI | GitHub Actions |
+| License | MIT |
 
 ## Service Mapping
 
